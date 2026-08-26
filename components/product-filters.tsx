@@ -22,12 +22,36 @@ export function ProductFilters({ categories, occasions }: ProductFiltersProps) {
 
   const activeCategory = searchParams.get("category")
   const activeOccasion = searchParams.get("occasion")
+  const activeSubs = searchParams.get("sub")?.split(",").filter(Boolean) ?? []
   const activeSort = searchParams.get("sort") ?? "newest"
+
+  // اگر دسته‌بندی خاصی انتخاب شده باشد، فقط زیردسته‌های همان دسته نشان داده می‌شود؛
+  // در غیر این صورت همه‌ی زیردسته‌های همه‌ی دسته‌بندی‌ها (بدون تکرار) نمایش داده می‌شود.
+  const availableSubCategories = activeCategory
+    ? categories.find((c) => c.slug === activeCategory)?.subCategories ?? []
+    : Array.from(new Set(categories.flatMap((c) => c.subCategories)))
 
   function updateParam(key: string, value: string | null) {
     const params = new URLSearchParams(searchParams.toString())
     if (value) params.set(key, value)
     else params.delete(key)
+    router.push(`/products?${params.toString()}`)
+  }
+
+  function selectCategory(slug: string | null) {
+    const params = new URLSearchParams(searchParams.toString())
+    if (slug) params.set("category", slug)
+    else params.delete("category")
+    // با عوض شدن دسته‌بندی، زیردسته‌های انتخاب‌شده‌ی قبلی که ممکن است به دسته‌ی جدید تعلق نداشته باشند پاک می‌شوند
+    params.delete("sub")
+    router.push(`/products?${params.toString()}`)
+  }
+
+  function toggleSub(sub: string) {
+    const params = new URLSearchParams(searchParams.toString())
+    const next = activeSubs.includes(sub) ? activeSubs.filter((s) => s !== sub) : [...activeSubs, sub]
+    if (next.length > 0) params.set("sub", next.join(","))
+    else params.delete("sub")
     router.push(`/products?${params.toString()}`)
   }
 
@@ -39,7 +63,7 @@ export function ProductFilters({ categories, occasions }: ProductFiltersProps) {
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2 lg:flex-col lg:gap-1.5">
           <button
-            onClick={() => updateParam("category", null)}
+            onClick={() => selectCategory(null)}
             className={`rounded-lg px-3 py-1.5 text-right text-sm transition ${!activeCategory ? "bg-emerald-50 font-medium text-emerald-700" : "text-neutral-600 hover:bg-neutral-50"}`}
           >
             همه محصولات
@@ -47,7 +71,7 @@ export function ProductFilters({ categories, occasions }: ProductFiltersProps) {
           {categories.map((cat) => (
             <button
               key={cat._id}
-              onClick={() => updateParam("category", cat.slug)}
+              onClick={() => selectCategory(cat.slug)}
               className={`rounded-lg px-3 py-1.5 text-right text-sm transition ${activeCategory === cat.slug ? "bg-emerald-50 font-medium text-emerald-700" : "text-neutral-600 hover:bg-neutral-50"}`}
             >
               {cat.name}
@@ -55,6 +79,25 @@ export function ProductFilters({ categories, occasions }: ProductFiltersProps) {
           ))}
         </CardContent>
       </Card>
+
+      {availableSubCategories.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">زیردسته</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2 lg:flex-col lg:gap-1.5">
+            {availableSubCategories.map((sub) => (
+              <button
+                key={sub}
+                onClick={() => toggleSub(sub)}
+                className={`rounded-lg px-3 py-1.5 text-right text-sm transition ${activeSubs.includes(sub) ? "bg-amber-50 font-medium text-amber-700" : "text-neutral-600 hover:bg-neutral-50"}`}
+              >
+                {sub}
+              </button>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader className="pb-3">

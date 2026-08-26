@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 }
 
 interface ProductsPageProps {
-  searchParams: Promise<{ category?: string; occasion?: string; sort?: string; search?: string }>
+  searchParams: Promise<{ category?: string; occasion?: string; sub?: string; sort?: string; search?: string }>
 }
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
@@ -34,6 +34,10 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   if (params.occasion) {
     const occ = occasions.find((o: any) => o.slug === params.occasion)
     if (occ) query.occasions = (occ as any)._id
+  }
+  const subs = params.sub?.split(",").filter(Boolean) ?? []
+  if (subs.length > 0) {
+    query.lowCategories = { $in: subs }
   }
   if (params.search) {
     query.$text = { $search: params.search }

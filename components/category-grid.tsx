@@ -49,7 +49,7 @@ export function CategoryGrid({ categories }: { categories: ICategory[] }) {
           {categories.map((category) => (
             <CarouselItem
               key={category._id}
-              className="category-card pr-3 sm:pr-4 pl-0 basis-1/2 sm:basis-[55%] md:basis-[42%] lg:basis-[30%]"
+              className="category-card pr-3 sm:pr-4 pl-0 basis-[38%] sm:basis-[55%] md:basis-[42%] lg:basis-[30%]"
             >
               <Link href={`/category/${category.slug}`} className="group flex flex-col items-center gap-3">
                 <div className="relative aspect-square w-full overflow-hidden rounded-2xl shadow-sm ring-1 ring-black/5 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-lg">

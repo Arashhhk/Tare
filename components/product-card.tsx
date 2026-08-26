@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Star, TrendingUp, Percent } from "lucide-react"
+import { Star, TrendingUp, Percent, PackageSearch } from "lucide-react"
 import AddToCartButton from "@/components/add-to-cart-button"
 import { SafeImage } from "@/components/safe-image"
 
@@ -76,13 +76,22 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           </div>
         )}
 
-        <div className="mb-3 mt-auto flex items-baseline gap-1.5">
+        <div className="mb-2 flex items-baseline gap-1.5">
           <span className="text-base font-bold text-neutral-900 sm:text-lg">{product.price.toLocaleString("fa-IR")}</span>
           <span className="text-xs text-neutral-500">تومان / {product.unit}</span>
           {discount > 0 && product.originalPrice && (
             <span className="text-xs text-neutral-400 line-through">{product.originalPrice.toLocaleString("fa-IR")}</span>
           )}
         </div>
+
+        {product.minOrderQty > 1 && (
+          <div className="mb-3 flex items-center gap-1 text-[11px] text-neutral-400">
+            <PackageSearch className="h-3 w-3" />
+            حداقل سفارش: {product.minOrderQty.toLocaleString("fa-IR")} {product.unit}
+          </div>
+        )}
+
+        <div className="mt-auto" />
 
         <AddToCartButton
           productId={product._id}

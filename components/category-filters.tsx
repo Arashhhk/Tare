@@ -1,19 +1,17 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Slider } from "@/components/ui/slider"
 
 interface CategoryFiltersProps {
   subCategories: string[]
 }
 
-const PRICE_RANGES = [
-  { label: "همه قیمت‌ها", min: undefined, max: undefined },
-  { label: "زیر ۵۰,۰۰۰ تومان", min: undefined, max: 50000 },
-  { label: "۵۰,۰۰۰ تا ۱۵۰,۰۰۰ تومان", min: 50000, max: 150000 },
-  { label: "۱۵۰,۰۰۰ تا ۳۰۰,۰۰۰ تومان", min: 150000, max: 300000 },
-  { label: "بالای ۳۰۰,۰۰۰ تومان", min: 300000, max: undefined },
-]
+const PRICE_MIN = 0
+const PRICE_MAX = 10_000_000
+const PRICE_STEP = 50_000
 
 const TAG_OPTIONS = [
   { value: "special", label: "پیشنهاد ویژه" },
@@ -29,6 +27,17 @@ export function CategoryFilters({ subCategories }: CategoryFiltersProps) {
   const activeTags = searchParams.get("tags")?.split(",").filter(Boolean) ?? []
   const minPrice = searchParams.get("minPrice")
   const maxPrice = searchParams.get("maxPrice")
+
+  // مقدار اسلایدر جدا از URL نگه داشته می‌شود تا حین کشیدن (drag) هر لحظه URL آپدیت نشود؛
+  // فقط وقتی رها می‌کند (onValueCommit) URL و در نتیجه فیلتر واقعی روی سرور اعمال می‌شود.
+  const [priceRange, setPriceRange] = useState<[number, number]>([
+    minPrice ? Number(minPrice) : PRICE_MIN,
+    maxPrice ? Number(maxPrice) : PRICE_MAX,
+  ])
+
+  useEffect(() => {
+    setPriceRange([minPrice ? Number(minPrice) : PRICE_MIN, maxPrice ? Number(maxPrice) : PRICE_MAX])
+  }, [minPrice, maxPrice])
 
   function updateParams(mutator: (params: URLSearchParams) => void) {
     const params = new URLSearchParams(searchParams.toString())
@@ -52,17 +61,19 @@ export function CategoryFilters({ subCategories }: CategoryFiltersProps) {
     })
   }
 
-  function applyPriceRange(min?: number, max?: number) {
+  function commitPriceRange(range: [number, number]) {
     updateParams((params) => {
-      if (min !== undefined) params.set("minPrice", String(min))
+      if (range[0] > PRICE_MIN) params.set("minPrice", String(range[0]))
       else params.delete("minPrice")
-      if (max !== undefined) params.set("maxPrice", String(max))
+      if (range[1] < PRICE_MAX) params.set("maxPrice", String(range[1]))
       else params.delete("maxPrice")
     })
   }
 
-  const isActivePriceRange = (min?: number, max?: number) =>
-    (min === undefined ? !minPrice : minPrice === String(min)) && (max === undefined ? !maxPrice : maxPrice === String(max))
+  function formatPrice(value: number) {
+    if (value >= 1_000_000) return `${(value / 1_000_000).toLocaleString("fa-IR", { maximumFractionDigits: 1 })} میلیون`
+    return value.toLocaleString("fa-IR")
+  }
 
   const hasActiveFilters = activeSubs.length > 0 || activeTags.length > 0 || minPrice || maxPrice
 
@@ -105,20 +116,26 @@ export function CategoryFilters({ subCategories }: CategoryFiltersProps) {
         <CardHeader className="pb-3">
           <CardTitle className="text-base">بازه قیمت</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-2 lg:flex-col lg:gap-1.5">
-          {PRICE_RANGES.map((range) => (
-            <button
-              key={range.label}
-              onClick={() => applyPriceRange(range.min, range.max)}
-              className={`rounded-lg px-3 py-1.5 text-right text-sm transition ${
-                isActivePriceRange(range.min, range.max)
-                  ? "bg-emerald-50 font-medium text-emerald-700 ring-1 ring-emerald-200"
-                  : "text-neutral-600 hover:bg-neutral-50"
-              }`}
-            >
-              {range.label}
-            </button>
-          ))}
+        <CardContent>
+          <div className="mb-4 flex items-center justify-between text-sm font-medium text-neutral-700">
+            <span>{formatPrice(priceRange[0])} تومان</span>
+            <span className="text-neutral-300">تا</span>
+            <span>{formatPrice(priceRange[1])} تومان</span>
+          </div>
+          <Slider
+            min={PRICE_MIN}
+            max={PRICE_MAX}
+            step={PRICE_STEP}
+            value={priceRange}
+            onValueChange={(value) => setPriceRange(value as [number, number])}
+            onValueCommit={(value) => commitPriceRange(value as [number, number])}
+            dir="rtl"
+            className="mt-2"
+          />
+          <div className="mt-2 flex justify-between text-[11px] text-neutral-400">
+            <span>۰</span>
+            <span>۱۰ میلیون تومان</span>
+          </div>
         </CardContent>
       </Card>
 
